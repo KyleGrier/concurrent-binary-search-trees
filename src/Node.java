@@ -1,4 +1,4 @@
-public class Node {
+public class Node<T> {
 	T value;
 	Node left;
 	Node right;
@@ -10,7 +10,7 @@ public class Node {
 	}
 
 	public T getValue() {
-		return T;
+		return value;
 	}
 
 	public void setValue(T value) {
