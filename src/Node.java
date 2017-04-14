@@ -1,36 +1,36 @@
 public class Node<T> {
-	T value;
-	Node left;
-	Node right;
+  private T value;
+  private Node left;
+  private Node right;
 
-	public Node(T value) {
-		this.value = value;
-		left = null;
-		right = null;
-	}
+  public Node(T value) {
+    this.value = value;
+    left = null;
+    right = null;
+  }
 
-	public T getValue() {
-		return value;
-	}
+  public T getValue() {
+    return value;
+  }
 
-	public void setValue(T value) {
-		this.value = value;
-	}
+  public void setValue(T value) {
+    this.value = value;
+  }
 
-	public Node getLeft() {
-		return left;
-	}
+  public Node getLeft() {
+    return left;
+  }
 
-	public Node getRight() {
-		return right;
-	}
-	
-	public void setLeft(Node left) {
-		this.left = left;
-	}
+  public Node getRight() {
+    return right;
+  }
 
-	public void setRight(Node right) {
-		this.right = right;
-	}
+  public void setLeft(Node left) {
+    this.left = left;
+  }
+
+  public void setRight(Node right) {
+    this.right = right;
+  }
 
 }
