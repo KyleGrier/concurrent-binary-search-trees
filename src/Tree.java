@@ -1,7 +1,5 @@
 public interface Tree<T> {
-  boolean insert(Node node);
-
-  boolean delete(Node node);
-
-  boolean search(T value);
+	public boolean insert(T node);
+	public boolean delete(T node);
+	public boolean search(T value);
 }

@@ -1,10 +1,10 @@
 public class DefaultTree<T> implements Tree<T> {
 
-  public boolean insert(Node node) {
+  public boolean insert(T value) {
     return true;
   }
 
-  public boolean delete(Node node) {
+  public boolean delete(T value) {
     return true;
   }
 

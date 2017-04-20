@@ -1,12 +1,15 @@
-public class Node<T> {
-  private T value;
-  private Node left;
-  private Node right;
+public class Node<T extends Comparable> {
+  T value;
 
   public Node(T value) {
     this.value = value;
-    left = null;
-    right = null;
+
+  }
+
+  public Node(T value, Node left, Node right) {
+    this.value = value;
+    //this.left = left;
+    //this.right = right;
   }
 
   public T getValue() {
@@ -17,20 +20,20 @@ public class Node<T> {
     this.value = value;
   }
 
-  public Node getLeft() {
+  /*public Node getLeft() {
     return left;
   }
 
   public Node getRight() {
     return right;
   }
-
+  
   public void setLeft(Node left) {
     this.left = left;
   }
 
   public void setRight(Node right) {
     this.right = right;
-  }
+  } */
 
 }

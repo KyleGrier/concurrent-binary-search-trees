@@ -3,12 +3,12 @@ import java.util.TreeSet;
 public class JavaTree implements Tree<Integer> {
   TreeSet<Integer> tree = new TreeSet<>();
 
-  public synchronized boolean insert(Node node) {
-    return tree.add((Integer) node.getValue());
+  public synchronized boolean insert(Integer value) {
+    return tree.add(value);
   }
 
-  public synchronized boolean delete(Node node) {
-    return tree.remove(node.getValue());
+  public synchronized boolean delete(Integer value) {
+    return tree.remove(value);
   }
 
   public synchronized boolean search(Integer value) {
