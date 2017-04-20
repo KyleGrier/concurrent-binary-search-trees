@@ -7,12 +7,13 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 	public static final int MARK = 3;
 
 
-	public LockFreeBST() {
-		Leaf right = new Leaf(null);
-		Leaf left = new Leaf(null);
+	public LockFreeBST(T dummyLeft, T dummyRight) {
+		Leaf right = new Leaf(dummyLeft);
+		Leaf left = new Leaf(dummyRight);
 		AtomicStampedReference<Info> update = new AtomicStampedReference<>(null, CLEAN);
-		root = new InternalNode(null, right, left, update);
+		root = new InternalNode(dummyRight, right, left, update);
 	}
+
 
 	//finds the value, its parent, and the corresponding updates if necessary 
 	private SearchReturn searchPrivate(T value) {
@@ -55,15 +56,18 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 			if (searchInfo.parentUpdate.getStamp() != CLEAN) {
 				help(searchInfo.parentUpdate);
 			} else {
-				Leaf newSibling = new Leaf(searchInfo.leaf.value);
+				//Leaf newSibling = new Leaf(searchInfo.leaf.value);
 				Comparable internalValue;
 				Leaf newLeaf;
+				Leaf newSibling;
 				if (value.compareTo(searchInfo.leaf.value) > 0 ) { //value is bigger than the current leaf
 					internalValue = value;
-					newLeaf = (Leaf) searchInfo.leaf; //new leaf is the smaller of the two
+					newLeaf = new Leaf(searchInfo.leaf.value); //new leaf is the smaller of the two
+					newSibling = new Leaf(value);
 				} else {
 					internalValue = searchInfo.leaf.value;
 					newLeaf = new Leaf(value);
+					newSibling = new Leaf(searchInfo.leaf.value);
 				}
 				AtomicStampedReference<Info> newInternalUpdate = new AtomicStampedReference<>(null, CLEAN);
 				InternalNode newInternalNode = new InternalNode(internalValue, newLeaf, newSibling, newInternalUpdate);
@@ -154,9 +158,9 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 				other = (Node) deleteInfo.parent.left.get();
 			}
 			if(deleteInfo.parentIsLeftOfGrandparent) {
-				deleteInfo.parent.left.compareAndSet(deleteInfo.parent, other);
+				deleteInfo.grandparent.left.compareAndSet(deleteInfo.parent, other);
 			} else {
-				deleteInfo.parent.right.compareAndSet(deleteInfo.parent, other);
+				deleteInfo.grandparent.right.compareAndSet(deleteInfo.parent, other);
 			}
 
 			deleteInfo.grandparent.update.compareAndSet(deleteInfo, deleteInfo, DFLAG, CLEAN);
