@@ -1,4 +1,8 @@
 import java.util.concurrent.atomic.AtomicStampedReference;
+/**
+ * Implementation of external lock-free binary search tree based on Ellen, Fatourou, Ruppert, and Breugel's
+ *  'Non-blocking Binary Search Trees' (2010)
+ */
 public class LockFreeBST<T extends Comparable> implements Tree<T>{
 	InternalNode root;
 	public static final int CLEAN = 0;
@@ -6,7 +10,9 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 	public static final int IFLAG = 2;
 	public static final int MARK = 3;
 
-
+	/**
+	 * To easily deal with edge cases, set dummyLeft s.t. dummyLeft < dummyRight
+	 */
 	public LockFreeBST(T dummyLeft, T dummyRight) {
 		Leaf right = new Leaf(dummyLeft);
 		Leaf left = new Leaf(dummyRight);
