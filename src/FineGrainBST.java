@@ -80,6 +80,7 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
         }else if(value.compareTo(rValue) > 0){
             find = searchIter(value, root.getRight());
         }else{ // case where the value is the same as the root
+            root.unlock();
             return true;
         }
 
@@ -119,7 +120,6 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             parent.unlock();
             return true;
         }
-        current.setLock();
         //current is now the new locked node
         parent.unlock();
         T rValue = (T) current.getValue();
