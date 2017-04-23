@@ -125,6 +125,10 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 		}
 	}
 
+	public Object getRoot() {
+		return root;
+	}
+
 	private void helpInsert(InsertInfo insertInfo) {
 		if (insertInfo != null) {
 			if(insertInfo.insertLeft) {

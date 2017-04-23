@@ -192,6 +192,10 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
         }
     }
 
+    public Object getRoot() {
+        return R;
+    }
+
     private void inject(IStateRecord<T> state) {
         IEdge<T> targetEdge = state.targetEdge;
         INode<T> parent = targetEdge.parent;

@@ -17,4 +17,8 @@ public class JavaTree implements Tree<Integer> {
     }
     return false;
   }
+
+  public synchronized Object getRoot() {
+    return tree.first();
+  }
 }

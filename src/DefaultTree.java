@@ -11,4 +11,8 @@ public class DefaultTree<T> implements Tree<T> {
   public boolean search(T value) {
     return true;
   }
+
+  public Object getRoot() {
+    return null;
+  }
 }

@@ -6,10 +6,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 class TestHelper {
   private static final int NUM_THREADS = 8;
-  private static final int NUM_OPERATIONS = 1000;
+  private static final int NUM_OPERATIONS = 5000;
 
   private final ExecutorService service = Executors.newFixedThreadPool(NUM_THREADS);
 
@@ -32,6 +33,121 @@ class TestHelper {
     } else {
       return 3L;
     }
+  }
+
+  /**
+   * Verifies that the given tree is a binary search tree.
+   *
+   * @param tree The tree to verify.
+   * @return True if the tree is a BST, false otherwise.
+   */
+  static boolean verifyIntegerTree(Tree<Integer> tree) {
+    if (tree instanceof FineGrainBST) {
+      FineNode<Integer> root = (FineNode<Integer>) tree.getRoot();
+
+      return verifyFineGrainedBST(root, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    } else if (tree instanceof LockFreeBST) {
+      InternalNode<Integer> root = (InternalNode<Integer>) tree.getRoot();
+
+      return verifyLockFreeBST(root);
+    } else if (tree instanceof ILockFreeBST) {
+      INode<Integer> root = (INode<Integer>) tree.getRoot();
+
+      return verifyILockFreeBST(root);
+    }
+
+    return true;
+  }
+
+  /**
+   * A helper method to verify the BST property.
+   *
+   * @param node The root node.
+   * @param min The minimum value that this node can contain.
+   * @param max The maximum value that this node can contain.
+   * @return True if the tree starting the the root node is a BST, false otherwise.
+   */
+  private static boolean verifyFineGrainedBST(FineNode<Integer> node, int min, int max) {
+    if (node == null) {
+      return true;
+    }
+
+    if (node.getValue() < min || node.getValue() > max) {
+      return false;
+    }
+
+    // Recursively check
+    return verifyFineGrainedBST(node.getLeft(), min, node.getValue() - 1)
+        && verifyFineGrainedBST(node.getRight(), node.getValue() + 1, max);
+  }
+
+  /**
+   * A helper method to verify the BST property.
+   *
+   * @param node The root node.
+   * @return True if the tree starting the the root node is a BST, false otherwise.
+   */
+  private static boolean verifyLockFreeBST(Node<Integer> node) {
+    if (node == null) {
+      return true;
+    }
+
+    List<Integer> values = new ArrayList<>();
+    buildInOrderList(node, values);
+
+    return values.stream().sorted().collect(Collectors.toList()).equals(values);
+  }
+
+  /**
+   * A helper method to verify the BST property.
+   *
+   * @param node The root node.
+   * @return True if the tree starting the the root node is a BST, false otherwise.
+   */
+  private static boolean verifyILockFreeBST(INode<Integer> node) {
+    if (node == null) {
+      return true;
+    }
+
+    List<Integer> values = new ArrayList<>();
+    buildInOrderList(node, values);
+
+    return values.stream().sorted().collect(Collectors.toList()).equals(values);
+  }
+
+  private static void buildInOrderList(Node<Integer> node, List<Integer> values) {
+    if (node == null) {
+      return;
+    }
+
+    // If it's a leaf, we care about the value
+    if (node instanceof Leaf) {
+      values.add(node.getValue());
+    } else if (node instanceof InternalNode) {
+      Node<Integer> left = (Node<Integer>) ((InternalNode) node).left.get();
+      Node<Integer> right = (Node<Integer>) ((InternalNode) node).right.get();
+
+      buildInOrderList(left, values);
+      buildInOrderList(right, values);
+    } else {
+      System.out.println("Something went horribly wrong.");
+      return;
+    }
+  }
+
+  private static void buildInOrderList(INode<Integer> node, List<Integer> values) {
+    if (!((node.child[0].getStamp() & INode.NULL_BIT) == INode.NULL_BIT)) {
+      // Left child
+      buildInOrderList(node.child[0].getReference(), values);
+    }
+
+    values.add(node.mKey.getReference());
+
+    if (!((node.child[1].getStamp() & INode.NULL_BIT) == INode.NULL_BIT)) {
+      // Right child
+      buildInOrderList(node.child[1].getReference(), values);
+    }
+
   }
 
   private Long performInserts(Tree<Integer> tree) {

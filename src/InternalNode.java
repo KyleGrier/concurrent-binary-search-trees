@@ -1,6 +1,6 @@
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicStampedReference;
-public class InternalNode<T extends Comparable> extends Node {
+public class InternalNode<T extends Comparable> extends Node<T> {
 	AtomicStampedReference<Info> update;
 	AtomicReference<Node> left;
 	AtomicReference<Node> right;

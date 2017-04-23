@@ -114,6 +114,10 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
         }
     }
 
+    public Object getRoot() {
+        return root;
+    }
+
     // value is the value to be found, current is the node the value is checked against
     // if through the search current is null then the method return .
     public FineNode searchIter(T value, FineNode current){
