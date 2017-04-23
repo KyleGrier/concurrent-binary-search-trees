@@ -1,7 +1,6 @@
 /**
  * Created by kyle on 4/22/2017.
  */
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -11,45 +10,36 @@ public class FineNode<T extends Comparable> {
     private FineNode left;
     private FineNode right;
     private ReentrantLock lock;
-    int numChildren;
+
     public FineNode(T value){
         this.value = value;
         lock = new ReentrantLock();
         left = null;
         right = null;
-        numChildren = 0;
+    }
+    public FineNode(T value, FineNode parent){
+        this.value = value;
+        lock = new ReentrantLock();
+        left = null;
+        right = null;
+        this.parent = parent;
     }
 
     public void setLeft(T value){
-        if(this.left ==null){
-            numChildren++;
-        }
-        this.left = new FineNode(value);
+        this.left = new FineNode(value, this);
     }
 
     public void setRight(T value){
-        if(this.right ==null){
-            numChildren++;
-        }
-        this.right = new FineNode(value);
+        this.right = new FineNode(value,this);
     }
     public void setLeft(FineNode newBaby){
-        if(this.left ==null){
-            numChildren++;
-        }
         this.left = newBaby;
     }
 
     public void setRight(FineNode newBaby){
-        if(this.right ==null){
-            numChildren++;
-        }
         this.right = newBaby;
     }
 
-    public void setParent(T value){
-        this.parent = new FineNode(value);
-    }
     public void setParent(FineNode newMama){
         this.parent = newMama;
     }
@@ -59,12 +49,10 @@ public class FineNode<T extends Comparable> {
 
     public void removeLeft(){
         this.right = null;
-        numChildren--;
     }
 
     public void removeRight(){
         this.right = null;
-        numChildren--;
     }
 
     public T getValue(){
@@ -104,8 +92,9 @@ public class FineNode<T extends Comparable> {
     public FineNode getParent(){
         return this.parent;
     }
+
     public Boolean hasChild(){
-        if(this.numChildren == 0){
+        if(this.left == null && this.right == null){
             return false;
         }
         return true;
