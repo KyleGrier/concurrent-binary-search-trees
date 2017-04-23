@@ -33,7 +33,29 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
         }else if(node.compareTo(rValue) > 0){
             find = searchDelete(node, root.getRight(), root);
         }else{ // case where the value is the same as the root
-            return true;
+            if(!root.hasChild()){//case where root has no children so the BST has nothing in it.
+                root = null;
+                return true;
+            }
+            FineNode theRight = root.getRight();
+            if(theRight == null){//case where the node being removed only has a left child
+                this.root = root.getLeft();
+                this.root.unlock();
+                return true;
+            }else{//case where the node being removed has a right child so there is a successor
+                FineNode theSuc = getSuccessor(theRight,root);
+                FineNode parentSuc = theSuc.getParent();
+                if(theSuc.hasChild()){
+                    FineNode rightSuc = theSuc.getRight();
+                    rightSuc.setParent(parentSuc);
+                    parentSuc.setLeft(rightSuc);
+                }else{
+                    parentSuc.removeLeft();
+                }
+                root.setValue(theSuc.getValue());
+                root.unlock();
+                return true;
+            }
         }
         if(find == null){
             return false;
