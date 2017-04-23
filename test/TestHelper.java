@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -8,9 +10,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertTrue;
+
 class TestHelper {
   private static final int NUM_THREADS = 8;
-  private static final int NUM_OPERATIONS = 5000;
+  private static final int NUM_OPERATIONS = 1000;
+  private static final int RANDOM_ADDS = 100;
 
   private final ExecutorService service = Executors.newFixedThreadPool(NUM_THREADS);
 
@@ -27,7 +32,7 @@ class TestHelper {
     if (operation.equals(OperationType.INSERT)) {
       return performInserts(tree);
     } else if (operation.equals(OperationType.SEARCH)) {
-      return 1L;
+      return performSearches(tree);
     } else if (operation.equals(OperationType.DELETE)) {
       return performDeletes(tree);
     } else {
@@ -127,6 +132,7 @@ class TestHelper {
     // If it's a leaf, we care about the value
     if (node instanceof Leaf) {
       values.add(node.getValue());
+      //System.out.println(node.getValue() + " ");
     } else if (node instanceof InternalNode) {
       Node<Integer> left = (Node<Integer>) ((InternalNode) node).left.get();
       Node<Integer> right = (Node<Integer>) ((InternalNode) node).right.get();
@@ -155,6 +161,8 @@ class TestHelper {
   }
 
   private Long performInserts(Tree<Integer> tree) {
+    System.out.println("Running insert test. Adding values...");
+
     List<Future> futures = new ArrayList<>();
 
     // Start threads
@@ -173,6 +181,87 @@ class TestHelper {
       }
     }
     long endTime = System.nanoTime();
+
+    System.out.println("Done adding to tree.");
+
+    // Return time taken to insert
+    return endTime - startTime;
+  }
+
+  private Long performSearches(Tree<Integer> tree) {
+    System.out.println("Running Search Test. Adding values first...");
+
+    List<Future<List<Integer>>> futures = new ArrayList<>();
+    List<List<Integer>> valueLists = new ArrayList<>();
+    Set<Integer> allInserted = new HashSet<>();
+    Set<Integer> extraNumbers = new HashSet<>();
+
+    // Start insert threads
+    for (int i = 0; i < NUM_THREADS; i++) {
+      Future<List<Integer>> future = service.submit(new InsertMemoryThread(tree, NUM_OPERATIONS));
+      futures.add(future);
+    }
+
+    // Wait for threads to finish
+    for (Future<List<Integer>> future : futures) {
+      try {
+        List<Integer> values = future.get();
+
+        valueLists.add(values);
+        allInserted.addAll(values);
+      } catch (ExecutionException | InterruptedException e) {
+        System.out.println("Thread interrupted.");
+      }
+    }
+
+    System.out.println("Tree contains: ");
+    //buildInOrderList((Node<Integer>) tree.getRoot(), new ArrayList<>());
+
+    System.out.println("Done adding to tree, adding non-existent values...");
+    for (int i = 0; i < RANDOM_ADDS; i++) {
+      int number = ThreadLocalRandom.current().nextInt();
+      int index = ThreadLocalRandom.current().nextInt(NUM_THREADS);
+
+      if (allInserted.contains(number)) {
+        i--;
+        continue;
+      }
+
+      valueLists.get(index).add(number);
+      extraNumbers.add(number);
+    }
+    System.out.println("Done adding values, now searching...");
+
+    List<Future<SearchResult<Integer>>> searchFutures = new ArrayList<>();
+
+    // Start search threads
+    long startTime = System.nanoTime();
+    for (int i = 0; i < NUM_THREADS; i++) {
+      Future<SearchResult<Integer>> future = service.submit(new SearchThread(tree, valueLists.get(i)));
+      searchFutures.add(future);
+    }
+
+    // Wait for threads to finish
+    for (Future<SearchResult<Integer>> future : searchFutures) {
+      try {
+        SearchResult<Integer> result = future.get();
+
+        /* Assert that all not found were added by us */
+        System.out.println("Not found: " + result.getNotFound());
+        System.out.println("Found: " + result.getFound());
+        System.out.println("All values added as extra: " + extraNumbers);
+        assertTrue(extraNumbers.containsAll(result.getNotFound()));
+
+        /* Assert that all found were added by the thread */
+        // TODO
+
+      } catch (ExecutionException | InterruptedException e) {
+        System.out.println("Thread interrupted.");
+      }
+    }
+    long endTime = System.nanoTime();
+
+    System.out.println("Done searching.");
 
     // Return time taken to insert
     return endTime - startTime;
@@ -227,7 +316,7 @@ class TestHelper {
   }
 
   /**
-   * A Thread to perform searches on a tree.
+   * A Thread to perform inserts on a tree.
    */
   private class InsertThread implements Callable<Void> {
     private final Tree<Integer> tree;
@@ -253,26 +342,24 @@ class TestHelper {
   /**
    * A Thread to perform searches on a tree.
    */
-  private class SearchThread implements Callable<Void> {
+  private class SearchThread implements Callable<SearchResult<Integer>> {
     private final Tree<Integer> tree;
-    private final int searches;
+    private final List<Integer> values;
 
     private final List<Integer> found;
     private final List<Integer> notFound;
 
-    SearchThread(Tree<Integer> tree, int searches) {
+    SearchThread(Tree<Integer> tree, List<Integer> values) {
       this.tree = tree;
-      this.searches = searches;
+      this.values = values;
 
       this.found = new ArrayList<>();
       this.notFound = new ArrayList<>();
     }
 
     @Override
-    public Void call() {
-      for (int i = 0; i < searches; i++) {
-        int number = ThreadLocalRandom.current().nextInt();
-
+    public SearchResult<Integer> call() {
+      for (Integer number : values) {
         if (tree.search(number)) {
           found.add(number);
         } else {
@@ -280,7 +367,7 @@ class TestHelper {
         }
       }
 
-      return null;
+      return new SearchResult<>(found, notFound);
     }
   }
 
@@ -306,7 +393,9 @@ class TestHelper {
         int number = ThreadLocalRandom.current().nextInt();
 
         values.add(number);
-        tree.insert(number);
+        if (!tree.insert(number)) {
+          System.out.println("Failed insert");
+        }
       }
 
       return values;

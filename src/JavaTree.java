@@ -12,10 +12,7 @@ public class JavaTree implements Tree<Integer> {
   }
 
   public synchronized boolean search(Integer value) {
-    for (Integer i : tree) {
-      if (i.equals(value)) return true;
-    }
-    return false;
+    return tree.contains(value);
   }
 
   public synchronized Object getRoot() {

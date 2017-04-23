@@ -1,47 +1,74 @@
+import org.junit.AfterClass;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
 public class DeleteTest {
   private final TestHelper helper = new TestHelper();
 
-  @Test
-  public void testTreeSet() {
+  private static final Map<String, String> times = new HashMap<>();
+
+  @Test(timeout = 10000)
+  public void testTreeSetDelete() {
     // This tests the Java TreeSet implementation. No verification is done,
     // this is simply for timing purposes.
     Tree<Integer> tree = new JavaTree();
     long time = helper.performOperations(tree, OperationType.DELETE);
 
-    System.out.println("Time taken to perform deletes (Java TreeSet): " + ((double) time / 1000000) + " ms");
+    String result = ((double) time / 1000000) + " ms";
+
+    times.put("Java TreeSet", result);
+    System.out.println("Time taken to perform deletes (Java TreeSet): " + result);
   }
 
-  @Test
-  public void testFineGrainedInsert() {
+  @Test(timeout = 10000)
+  public void testFineGrainedDelete() {
     Tree<Integer> tree = new FineGrainBST<>(1);
     long time = helper.performOperations(tree, OperationType.DELETE);
 
     assertTrue(TestHelper.verifyIntegerTree(tree));
 
-    System.out.println("Time taken to perform deletes (Fine-Grained): " + ((double) time / 1000000) + " ms");
+    String result = ((double) time / 1000000) + " ms";
+
+    times.put("Fine Grained", result);
+    System.out.println("Time taken to perform deletes (Fine-Grained): " + result);
   }
 
-  @Test
-  public void testLockFreeInsert() {
+  @Test(timeout = 10000)
+  public void testLockFreeDelete() {
     Tree<Integer> tree = new LockFreeBST<>(1, 200);
     long time = helper.performOperations(tree, OperationType.DELETE);
 
     assertTrue(TestHelper.verifyIntegerTree(tree));
 
-    System.out.println("Time taken to perform deletes (Lock Free): " + ((double) time / 1000000) + " ms");
+    String result = ((double) time / 1000000) + " ms";
+
+    times.put("Lock Free", result);
+    System.out.println("Time taken to perform deletes (Lock Free): " + result);
   }
 
-  @Test
-  public void testILockFreeInsert() {
+  @Test(timeout = 10000)
+  public void testILockFreeDelete() {
     Tree<Integer> tree = new ILockFreeBST<>(Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1, Integer.MAX_VALUE);
     long time = helper.performOperations(tree, OperationType.DELETE);
 
     assertTrue(TestHelper.verifyIntegerTree(tree));
 
-    System.out.println("Time taken to perform deletes (Internal Lock Free): " + ((double) time / 1000000) + " ms");
+    String result = ((double) time / 1000000) + " ms";
+
+    times.put("Internal Lock Free", result);
+    System.out.println("Time taken to perform deletes (Internal Lock Free): " + result);
+  }
+
+  @AfterClass
+  public static void summarizeDeletes() {
+    System.out.println("\nDelete Times:\n--------------------");
+    for (Map.Entry entry : times.entrySet()) {
+      System.out.println(entry.getKey() + ": " + entry.getValue());
+    }
+    System.out.println();
   }
 }
