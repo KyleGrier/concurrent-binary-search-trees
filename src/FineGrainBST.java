@@ -29,7 +29,33 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
     }
 
     public boolean search(T value){
+        root.setLock();
+        T rValue = (T) root.getValue();
+        if(value.compareTo(rValue) < 0){
+            return searchIter(value, root.getLeft());
+        }else if(value.compareTo(rValue) > 0){
+            return searchIter(value, root.getRight());
+        }else{ // case where the value is the same as the root
+            return true;
+        }
+    }
 
+    // value is the value to be found, current is the node the value is checked against
+    // if through the search current is null then the method return .
+    public boolean searchIter(T value, FineNode current){
+        while(current != null){
+            current.setLock();
+            T rValue = (T) current.getValue();
+            current.unlock();
+            if(value.compareTo(rValue) < 0){
+                current = current.getLeft();
+            }else if(value.compareTo(rValue) > 0){
+                current = current.getRight();
+            }else{ // case where the value is the same as the root
+                return true;
+            }
+        }
+        return false;
     }
     // node is value to be inserted, current is the the node currently being explored, parent is previous node,
     // pside is LEFT or RIGHT depending on where current is in relation to parent.
@@ -38,6 +64,8 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
         //there is nothing on the pside of the parent so the node can be made here
         if(current == null) {
             doInsert(node, parent, pside);
+            parent.unlock();
+            return true;
         }
         current.setLock();
         //current is now the new locked node
@@ -47,7 +75,8 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             return insertRec(node, current.getLeft(), current, LEFT);
         }else if(node.compareTo(rValue) > 0){
             return insertRec(node, current.getRight(), current, RIGHT);
-        }else{ // case where the value is the same as the root
+        }else{ // case where the value is the same as the current node
+            current.unlock();
             return false;
         }
     }
