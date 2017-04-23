@@ -47,4 +47,12 @@ public class FineNode<T extends Comparable> {
     public void unlock(){
         lock.unlock();
     }
+
+    public FineNode getRight(){
+        return this.right;
+    }
+
+    public FineNode getLeft(){
+        return this.left;
+    }
 }
