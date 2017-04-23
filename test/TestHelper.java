@@ -23,13 +23,13 @@ class TestHelper {
    * @return The time taken to perform the searches in nanoseconds
    */
   Long performOperations(Tree<Integer> tree,
-                                OperationType operation) {
+                         OperationType operation) {
     if (operation.equals(OperationType.INSERT)) {
       return performInserts(tree);
     } else if (operation.equals(OperationType.SEARCH)) {
       return 1L;
     } else if (operation.equals(OperationType.DELETE)) {
-      return 2L;
+      return performDeletes(tree);
     } else {
       return 3L;
     }
@@ -39,6 +39,7 @@ class TestHelper {
    * Verifies that the given tree is a binary search tree.
    *
    * @param tree The tree to verify.
+   *
    * @return True if the tree is a BST, false otherwise.
    */
   static boolean verifyIntegerTree(Tree<Integer> tree) {
@@ -65,6 +66,7 @@ class TestHelper {
    * @param node The root node.
    * @param min The minimum value that this node can contain.
    * @param max The maximum value that this node can contain.
+   *
    * @return True if the tree starting the the root node is a BST, false otherwise.
    */
   private static boolean verifyFineGrainedBST(FineNode<Integer> node, int min, int max) {
@@ -85,6 +87,7 @@ class TestHelper {
    * A helper method to verify the BST property.
    *
    * @param node The root node.
+   *
    * @return True if the tree starting the the root node is a BST, false otherwise.
    */
   private static boolean verifyLockFreeBST(Node<Integer> node) {
@@ -102,6 +105,7 @@ class TestHelper {
    * A helper method to verify the BST property.
    *
    * @param node The root node.
+   *
    * @return True if the tree starting the the root node is a BST, false otherwise.
    */
   private static boolean verifyILockFreeBST(INode<Integer> node) {
@@ -174,6 +178,54 @@ class TestHelper {
     return endTime - startTime;
   }
 
+  private Long performDeletes(Tree<Integer> tree) {
+    System.out.println("Running Delete Test. Adding values first...");
+
+    List<Future<List<Integer>>> futures = new ArrayList<>();
+    List<List<Integer>> valueLists = new ArrayList<>();
+
+    // Start insert threads
+    for (int i = 0; i < NUM_THREADS; i++) {
+      Future<List<Integer>> future = service.submit(new InsertMemoryThread(tree, NUM_OPERATIONS));
+      futures.add(future);
+    }
+
+    // Wait for threads to finish
+    for (Future<List<Integer>> future : futures) {
+      try {
+        valueLists.add(future.get());
+      } catch (ExecutionException | InterruptedException e) {
+        System.out.println("Thread interrupted.");
+      }
+    }
+
+    System.out.println("Done adding to tree, now deleting...");
+
+    List<Future> deleteFutures = new ArrayList<>();
+
+    // Start delete threads
+    long startTime = System.nanoTime();
+    for (int i = 0; i < NUM_THREADS; i++) {
+      Future<Void> future = service.submit(new DeleteThread(tree, valueLists.get(i)));
+      deleteFutures.add(future);
+    }
+
+    // Wait for threads to finish
+    for (Future future : deleteFutures) {
+      try {
+        future.get();
+      } catch (ExecutionException | InterruptedException e) {
+        System.out.println("Thread interrupted.");
+      }
+    }
+    long endTime = System.nanoTime();
+
+    System.out.println("Done deleting.");
+
+    // Return time taken to insert
+    return endTime - startTime;
+  }
+
   /**
    * A Thread to perform searches on a tree.
    */
@@ -233,22 +285,49 @@ class TestHelper {
   }
 
   /**
+   * A Thread to perform inserts on a tree and remember the values.
+   */
+  private class InsertMemoryThread implements Callable<List<Integer>> {
+    private final Tree<Integer> tree;
+    private final int inserts;
+
+    private final List<Integer> values;
+
+    InsertMemoryThread(Tree<Integer> tree, int inserts) {
+      this.tree = tree;
+      this.inserts = inserts;
+
+      this.values = new ArrayList<>();
+    }
+
+    @Override
+    public List<Integer> call() {
+      for (int i = 0; i < inserts; i++) {
+        int number = ThreadLocalRandom.current().nextInt();
+
+        values.add(number);
+        tree.insert(number);
+      }
+
+      return values;
+    }
+  }
+
+  /**
    * A Thread to perform deletes on a tree.
    */
   private class DeleteThread implements Callable<Void> {
     private final Tree<Integer> tree;
-    private final int deletes;
+    private final List<Integer> values;
 
-    DeleteThread(Tree<Integer> tree, int deletes) {
+    DeleteThread(Tree<Integer> tree, List<Integer> values) {
       this.tree = tree;
-      this.deletes = deletes;
+      this.values = values;
     }
 
     @Override
     public Void call() {
-      for (int i = 0; i < deletes; i++) {
-        int number = ThreadLocalRandom.current().nextInt();
-
+      for (Integer number : values) {
         tree.delete(number);
       }
 
