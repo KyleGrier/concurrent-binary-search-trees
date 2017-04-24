@@ -63,7 +63,12 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
         FineNode parentalUnit = find.getParent();
         //when the node to be deleted has no children
         if(!find.hasChild()){
-            parentalUnit.removeLeft();
+            Boolean side = parentalUnit.whichChild(find);
+            if(side == LEFT){
+                parentalUnit.removeLeft();
+            }else{
+                parentalUnit.removeRight();
+            }
             parentalUnit.unlock();
             return true;
         }
@@ -82,9 +87,16 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
                 FineNode rightSuc = theSuc.getRight();
                 rightSuc.setParent(parentSuc);
                 parentSuc.setLeft(rightSuc);
+                rightSuc.unlock();
             }else{
-                parentSuc.removeLeft();
+                Boolean side = parentSuc.whichChild(theSuc);
+                if(side == LEFT){
+                    parentSuc.removeLeft();
+                }else{
+                    parentSuc.removeRight();
+                }
             }
+            parentSuc.unlock();
             find.setValue(theSuc.getValue());
             parentalUnit.unlock();
             find.unlock();
@@ -195,9 +207,19 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
                 parent.unlock();
                 parent = current;
                 current = current.getRight();
-            }else{ // case where the value is the same as the root
+            }else{ // case where value is equal to the currently accessed node
                 return current;
             }
         }
+    }
+    public static void main(String[] args){
+        FineGrainBST practice = new FineGrainBST(7);
+        practice.insert(8);
+        practice.insert(4);
+        practice.insert(2);
+        practice.insert(1);
+        practice.insert(24);
+        practice.delete(7);
+        practice.delete(1);
     }
 }
