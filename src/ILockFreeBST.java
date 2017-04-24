@@ -148,7 +148,7 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
             IEdge<T> targetEdge = targetRecord.lastEdge;
             IEdge<T> pTargetEdge = targetRecord.pLastEdge;
             T nKey = targetEdge.child.mKey.getReference();
-            if (myState.currentKey != nKey) {
+            if (!myState.currentKey.equals(nKey)) {
                 if (myState.mode == IStateRecord.INJECTION) {
                     return false;
                 } else {
