@@ -7,7 +7,7 @@ public class TestDriver {
 		System.out.println(tree.insert(40));
 		System.out.println(tree.insert(50));
 		System.out.println(tree.insert(10));
-
+		//tree.delete(20);
 
 		try {
 			Thread t1 = new Thread() {
@@ -32,7 +32,7 @@ public class TestDriver {
 			t2.start();
 			
 			t1.join();
-			t2.join();
+			t2.join(); 
 
 			System.out.println("Searching");
 

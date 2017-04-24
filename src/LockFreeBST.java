@@ -28,10 +28,8 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 		while(searchInfo.leaf instanceof InternalNode) {
 			searchInfo.moveDown();
 			if (value.compareTo(searchInfo.leaf.value) < 0 ) {
-				searchInfo.childIsLeftChildOfParent = true;
 				searchInfo.leaf =  (Node) searchInfo.parent.left.get();
 			} else {
-				searchInfo.childIsLeftChildOfParent = false;
 				searchInfo.leaf = (Node) searchInfo.parent.right.get();
 			}
 		}
@@ -77,7 +75,7 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 				}
 				AtomicStampedReference<Info> newInternalUpdate = new AtomicStampedReference<>(null, CLEAN);
 				InternalNode newInternalNode = new InternalNode(internalValue, newLeaf, newSibling, newInternalUpdate);
-				InsertInfo insertInfo = new InsertInfo(searchInfo.parent, newInternalNode, (Leaf) searchInfo.leaf, searchInfo.childIsLeftChildOfParent);
+				InsertInfo insertInfo = new InsertInfo(searchInfo.parent, newInternalNode, (Leaf) searchInfo.leaf);
 				Info expectedOldParentInfo = searchInfo.parentUpdate.getReference();
 				boolean success = searchInfo.parent.update.compareAndSet(expectedOldParentInfo, insertInfo, CLEAN, IFLAG);
 				if(success) {
@@ -108,9 +106,7 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 				DeleteInfo deleteInfo = new DeleteInfo(searchInfo.parent,
 						searchInfo.grandparent,
 						(Leaf) searchInfo.leaf,
-						searchInfo.childIsLeftChildOfParent,
-						searchInfo.parentUpdate,
-						searchInfo.parentIsLeftChildOfGrandparent);
+						searchInfo.parentUpdate);
 				Info expectedOldGrandparentInfo = searchInfo.grandparentUpdate.getReference();
 				boolean success = searchInfo.grandparent.update.compareAndSet(expectedOldGrandparentInfo, deleteInfo, CLEAN, DFLAG);
 				if(success) {
@@ -129,16 +125,18 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 		return root;
 	}
 
-	private void helpInsert(InsertInfo insertInfo) {
-		if (insertInfo != null) {
-			if(insertInfo.insertLeft) {
-				insertInfo.parent.left.compareAndSet(insertInfo.leaf, insertInfo.newInternal);
-			} else {
-				insertInfo.parent.right.compareAndSet(insertInfo.leaf, insertInfo.newInternal);
-			}
-
-			insertInfo.parent.update.compareAndSet(insertInfo, insertInfo, IFLAG, CLEAN);
+	private void casChild(InternalNode<T> parent, Node oldNode, Node newNode) {
+		if(newNode.getValue().compareTo(parent.getValue()) < 0) {
+			parent.left.compareAndSet(oldNode, newNode);
+		} else {
+			parent.right.compareAndSet(oldNode, newNode);
 		}
+	}
+
+	private void helpInsert(InsertInfo insertInfo) {
+		casChild(insertInfo.parent, insertInfo.leaf, insertInfo.newInternal);
+		insertInfo.parent.update.compareAndSet(insertInfo, insertInfo, IFLAG, CLEAN);
+
 
 	}
 
@@ -162,17 +160,12 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 	private void helpMarked(DeleteInfo deleteInfo) {
 		if(deleteInfo != null) {
 			Node other;
-			if(deleteInfo.deleteLeft) {
-				other = (Node) deleteInfo.parent.right.get();
-			} else {
+			if(deleteInfo.parent.right.get().equals(deleteInfo.leaf)) {
 				other = (Node) deleteInfo.parent.left.get();
-			}
-			if(deleteInfo.parentIsLeftOfGrandparent) {
-				deleteInfo.grandparent.left.compareAndSet(deleteInfo.parent, other);
 			} else {
-				deleteInfo.grandparent.right.compareAndSet(deleteInfo.parent, other);
+				other = (Node) deleteInfo.parent.right.get();
 			}
-
+			casChild(deleteInfo.grandparent, deleteInfo.parent, other);
 			deleteInfo.grandparent.update.compareAndSet(deleteInfo, deleteInfo, DFLAG, CLEAN);
 			
 		}

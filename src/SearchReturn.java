@@ -6,14 +6,11 @@ public class SearchReturn {
 	Node leaf;
 	AtomicStampedReference<Info> parentUpdate;
 	AtomicStampedReference<Info> grandparentUpdate;
-	boolean parentIsLeftChildOfGrandparent = false;
-	boolean childIsLeftChildOfParent = false;
 
 	public void moveDown() {
 		grandparent = parent;
 		grandparentUpdate = parentUpdate;
 		parent = (InternalNode) leaf;
-		parentIsLeftChildOfGrandparent = childIsLeftChildOfParent;
 		grandparentUpdate = parentUpdate;
 		parentUpdate = parent.update;
 	}

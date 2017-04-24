@@ -2,8 +2,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicStampedReference;
 public class InternalNode<T extends Comparable> extends Node<T> {
 	AtomicStampedReference<Info> update;
-	AtomicReference<Node> left;
-	AtomicReference<Node> right;
+	AtomicReference<Node<T>> left;
+	AtomicReference<Node<T>> right;
 
 	public InternalNode(T value, Node left, Node right, AtomicStampedReference<Info> update) {
 		super(value);

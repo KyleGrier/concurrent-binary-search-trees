@@ -6,10 +6,8 @@ public class TestDriverInternal {
         int INF_U = Integer.MAX_VALUE;
         int INF_T = Integer.MAX_VALUE - 1;
         int INF_R = Integer.MAX_VALUE - 2;
-        System.out.println("Initializing tree");
         final ILockFreeBST<Integer> tree = new ILockFreeBST<>(INF_R, INF_T, INF_U);
 
-        System.out.println("Initialized tree");
         System.out.println(tree.insert(30));
         System.out.println(tree.insert(20));
         System.out.println(tree.insert(40));
