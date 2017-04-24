@@ -218,9 +218,9 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
 
         result = markChildEdge(state, IEdge.LEFT);
         if(!result) {
-            markChildEdge(state, IEdge.RIGHT);
+            return;
         }
-
+        markChildEdge(state, IEdge.RIGHT);
         initializeTypeAndUpdateMode(state);
     }
 
@@ -266,7 +266,7 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
         IEdge<T> succesorEdge = seekRecord.lastEdge;
         int[] stamp = new int[1];
         INode<T> address = succesorEdge.child.child[IEdge.LEFT].get(stamp);
-        if(!((stamp[0] & INode.PROMOTE_BIT ) == INode.PROMOTE_BIT) || address != node) {
+        if((!((stamp[0] & INode.PROMOTE_BIT ) == INode.PROMOTE_BIT)) || address != node) {
             node.readyToReplace = true;
             updateMode(state);
             return;
@@ -289,16 +289,16 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
             int stamp2 = succesorEdge.parent.child[which].getStamp();
             int i = stamp2 & INode.INJECT_BIT;
             int[] temp = new int[1];
-            INode<T> right = succesorEdge.parent.child[IEdge.RIGHT].get(temp);
+            INode<T> right = succesorEdge.child.child[IEdge.RIGHT].get(temp);
             int n = temp[0] & INode.NULL_BIT;
             INode<T> oldRef = succesorEdge.child;
-            int oldStamp = i & dFlag;
+            int oldStamp = i | dFlag;
             INode<T> newRef;
             int newStamp;
             AtomicStampedReference<INode<T>> newValue;
-            if(n != 0) {
+            if(n == INode.NULL_BIT) {
                 newRef = succesorEdge.child;
-                newStamp = INode.NULL_BIT & dFlag;
+                newStamp = INode.NULL_BIT | dFlag;
             } else {
                 newRef = right;
                 newStamp = dFlag;
@@ -536,7 +536,7 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
         state.targetEdge = new IEdge<>(null, left, IEdge.NONE);
         state.mode = IStateRecord.DISCOVERY;
         IEdge<T> pLastEdge = new IEdge(null, parent, IEdge.NONE);
-        state.succesorRecord = new ISeekRecord<>(helpeeEdge, pLastEdge, null);
+        state.succesorRecord = new ISeekRecord<>(pLastEdge, helpeeEdge, null);
         removeSuccesor(state);
     }
 
