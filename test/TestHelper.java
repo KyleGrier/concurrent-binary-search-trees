@@ -30,7 +30,7 @@ class TestHelper {
   Long performOperations(Tree<Integer> tree,
                          OperationType operation) {
     if (operation == null) {
-      performMixedOperations(tree);
+      return performMixedOperations(tree);
     } else if(operation.equals(OperationType.INSERT)) {
       return performInserts(tree);
     } else if (operation.equals(OperationType.SEARCH)) {
@@ -482,9 +482,12 @@ class TestHelper {
     public Void call() {
       for (int i = 0; i < operations; i++) {
         OperationType type = OperationType.randomType();
+        //System.out.println("Performing " + type);
+
         int number = ThreadLocalRandom.current().nextInt();
 
-        int index = ThreadLocalRandom.current().nextInt(inserted.size());
+        int index;
+        int value;
 
         switch (type) {
           case INSERT:
@@ -496,7 +499,8 @@ class TestHelper {
           case SEARCH:
             if (inserted.size() == 0) continue;
 
-            int value = inserted.get(index);
+            index = ThreadLocalRandom.current().nextInt(inserted.size());
+            value = inserted.get(index);
             if (!tree.search(value)) {
               System.out.println("NOT FOUND: " + value);
             }
@@ -506,6 +510,7 @@ class TestHelper {
           case DELETE:
             if (inserted.size() == 0) continue;
 
+            index = ThreadLocalRandom.current().nextInt(inserted.size());
             value = inserted.get(index);
             if (!(tree.delete(value))) {
               System.out.println("UNABLE TO DELETE VALUE: " + value);
