@@ -13,13 +13,13 @@ public class FineNode<T extends Comparable> {
 
     public FineNode(T value){
         this.value = value;
-        lock = new ReentrantLock();
+        lock = new ReentrantLock(true);
         left = null;
         right = null;
     }
     public FineNode(T value, FineNode parent){
         this.value = value;
-        lock = new ReentrantLock();
+        lock = new ReentrantLock(true);
         left = null;
         right = null;
         this.parent = parent;
@@ -48,7 +48,7 @@ public class FineNode<T extends Comparable> {
     }
 
     public void removeLeft(){
-        this.right = null;
+        this.left = null;
     }
 
     public void removeRight(){
@@ -84,11 +84,15 @@ public class FineNode<T extends Comparable> {
     }
     public Boolean isSuccessor(){
         if(this.left == null){
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
-
+    public Boolean whichChild(FineNode child){
+        if(child == this.left){
+            return false;
+        }else return true;
+    }
     public FineNode getParent(){
         return this.parent;
     }
