@@ -7,12 +7,12 @@ public class SearchReturn {
 	AtomicStampedReference<Info> parentUpdate;
 	AtomicStampedReference<Info> grandparentUpdate;
 
-	public void moveDown() {
-		grandparent = parent;
-		grandparentUpdate = parentUpdate;
-		parent = (InternalNode) leaf;
-		grandparentUpdate = parentUpdate;
-		parentUpdate = parent.update;
+	public SearchReturn(InternalNode grandparent, InternalNode parent, Node leaf, AtomicStampedReference<Info> parentUpdate, AtomicStampedReference<Info> grandparentUpdate) {
+		this.grandparent = grandparent;
+		this.parent = parent;
+		this.leaf = leaf;
+		this.parentUpdate = parentUpdate;
+		this.grandparentUpdate = grandparentUpdate;
 	}
 
 }

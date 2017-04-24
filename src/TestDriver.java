@@ -1,7 +1,7 @@
 public class TestDriver {
 
 	public static void main(String[] args) {
-		final LockFreeBST<Integer> tree = new LockFreeBST<>(1, 15);
+		final LockFreeBST<Integer> tree = new LockFreeBST<>(Integer.MAX_VALUE-1, Integer.MAX_VALUE);
 		System.out.println(tree.insert(30));
 		System.out.println(tree.insert(20));
 		System.out.println(tree.insert(40));
@@ -9,22 +9,32 @@ public class TestDriver {
 		System.out.println(tree.insert(10));
 		//tree.delete(20);
 
+		for(int i = 0; i< 500; i++) {
+			tree.insert(i);
+		}
+
+
+
 		try {
 			Thread t1 = new Thread() {
 			  public void run() {
-			    tree.insert(51);
-			    tree.insert(16);
-			    tree.insert(60);
-			    tree.insert(12);
-			    tree.delete(51);
+				  for(int i = 0; i< 10000; i+=2) {
+					  if(i % 50 == 0) {
+					  	System.out.println("Inserting " + i);
+					  }
+					  tree.insert(i);
+				  }
 			  }
 			};
 
 			Thread t2 = new Thread() {
 			  public void run() {
-			    tree.delete(20);
-			    tree.delete(40);
-			    tree.insert(61);
+				  for(int i = 10000; i< 0; i-=3) {
+					  if(i % 60 == 0) {
+						  System.out.println("Inserting " + i);
+					  }
+					  tree.insert(i);
+				  }
 			  }
 			};
 
@@ -32,24 +42,52 @@ public class TestDriver {
 			t2.start();
 			
 			t1.join();
-			t2.join(); 
+			t2.join();
 
 			System.out.println("Searching");
 
-			//should be false
-			System.out.println(tree.search(20));
-			System.out.println(tree.search(40));
-			System.out.println(tree.search(51));
+			Thread t3 = new Thread() {
+				public void run() {
+					for(int i = 0; i<10000; i+=2) {
+						boolean ret = tree.search(i);
+						if(!ret) {
+							System.out.println("Couldn't find " + i);
+						}
+					}
+				}
+			};
 
+			Thread t4 = new Thread() {
+				public void run() {
+					for(int i = 10000; i<0; i-=3) {
+						boolean ret = tree.search(i);
+						if(!ret) {
+							System.out.println("Couldn't find " + i);
+						}
+					}
+				}
+			};
 
-			//should be true
-			System.out.println(tree.search(12));
-			System.out.println(tree.search(16));
-			System.out.println(tree.search(60));
-			System.out.println(tree.search(61));
-			System.out.println(tree.search(50));
-			System.out.println(tree.search(30));
-			System.out.println(tree.search(10));
+			t3.start();
+			t4.start();
+
+			t3.join();
+			t4.join();
+
+			/*for(int i = 0; i<10000; i+=2) {
+				boolean ret = tree.search(i);
+				if(!ret) {
+					System.out.println("Couldn't find " + i);
+				}
+			}
+
+			for(int i = 10000; i<0; i-=3) {
+				boolean ret = tree.search(i);
+				if(!ret) {
+					System.out.println("Couldn't find " + i);
+				}
+			} */
+
 
 
 		} catch (Exception e) {

@@ -14,27 +14,36 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 	 * To easily deal with edge cases, set dummyLeft s.t. dummyLeft < dummyRight
 	 */
 	public LockFreeBST(T dummyLeft, T dummyRight) {
-		Leaf right = new Leaf(dummyLeft);
-		Leaf left = new Leaf(dummyRight);
+		Leaf right = new Leaf(dummyRight);
+		Leaf left = new Leaf(dummyLeft);
 		AtomicStampedReference<Info> update = new AtomicStampedReference<>(null, CLEAN);
-		root = new InternalNode(dummyRight, right, left, update);
+		root = new InternalNode(dummyRight, left, right, update);
 	}
 
 
 	//finds the value, its parent, and the corresponding updates if necessary 
 	private SearchReturn searchPrivate(T value) {
-		SearchReturn searchInfo = new SearchReturn();
-		searchInfo.leaf = root;
-		while(searchInfo.leaf instanceof InternalNode) {
-			searchInfo.moveDown();
-			if (value.compareTo(searchInfo.leaf.value) < 0 ) {
-				searchInfo.leaf =  (Node) searchInfo.parent.left.get();
+		InternalNode grandparent = null;
+		InternalNode parent = null;
+		Node leaf = root;
+		AtomicStampedReference<Info> grandparentUpdate = null;
+		AtomicStampedReference<Info> parentUpdate= null;
+
+		while(leaf instanceof InternalNode) {
+			grandparent = parent;
+			parent = (InternalNode) leaf;
+			grandparentUpdate = parentUpdate;
+			parentUpdate = parent.update;
+
+
+			if (value.compareTo(leaf.value) < 0 ) {
+				leaf =  (Node) parent.left.get();
 			} else {
-				searchInfo.leaf = (Node) searchInfo.parent.right.get();
+				leaf = (Node) parent.right.get();
 			}
 		}
 
-		return searchInfo;
+		return new SearchReturn(grandparent, parent, leaf, parentUpdate, grandparentUpdate);
 	}
 
 
@@ -76,13 +85,14 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 				AtomicStampedReference<Info> newInternalUpdate = new AtomicStampedReference<>(null, CLEAN);
 				InternalNode newInternalNode = new InternalNode(internalValue, newLeaf, newSibling, newInternalUpdate);
 				InsertInfo insertInfo = new InsertInfo(searchInfo.parent, newInternalNode, (Leaf) searchInfo.leaf);
-				Info expectedOldParentInfo = searchInfo.parentUpdate.getReference();
-				boolean success = searchInfo.parent.update.compareAndSet(expectedOldParentInfo, insertInfo, CLEAN, IFLAG);
+				int[] stamp = new int[1];
+				Info expectedOldParentInfo = searchInfo.parentUpdate.get(stamp);
+				boolean success = searchInfo.parent.update.compareAndSet(expectedOldParentInfo, insertInfo, stamp[0], IFLAG);
 				if(success) {
 					helpInsert(insertInfo);
 					return true;
 				} else { //someone else got here before you
-					help(searchInfo.parentUpdate);
+					help(searchInfo.parent.update);
 				}
 			}
 
@@ -107,14 +117,15 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 						searchInfo.grandparent,
 						(Leaf) searchInfo.leaf,
 						searchInfo.parentUpdate);
-				Info expectedOldGrandparentInfo = searchInfo.grandparentUpdate.getReference();
-				boolean success = searchInfo.grandparent.update.compareAndSet(expectedOldGrandparentInfo, deleteInfo, CLEAN, DFLAG);
+				int[] stamp = new int[1];
+				Info expectedOldGrandparentInfo = searchInfo.grandparentUpdate.get(stamp);
+				boolean success = searchInfo.grandparent.update.compareAndSet(expectedOldGrandparentInfo, deleteInfo, stamp[0], DFLAG);
 				if(success) {
 					if (helpDelete(deleteInfo)) {
 						return true;
 					}
 				} else { //someone else got here before you
-					help(searchInfo.grandparentUpdate);
+					help(searchInfo.grandparent.update);
 				}
 			}
 
@@ -142,8 +153,9 @@ public class LockFreeBST<T extends Comparable> implements Tree<T>{
 
 	private boolean helpDelete(DeleteInfo deleteInfo) {
 		if (deleteInfo != null) {
-			Info expectedOldParentInfo = deleteInfo.parentUpdate.getReference();
-			boolean success = deleteInfo.parent.update.compareAndSet(expectedOldParentInfo, deleteInfo, CLEAN, MARK); //not sure if this is supposed to be clean
+			int[] stamp = new int[1];
+			Info expectedOldParentInfo = deleteInfo.parentUpdate.get(stamp);
+			boolean success = deleteInfo.parent.update.compareAndSet(expectedOldParentInfo, deleteInfo, stamp[0], MARK); //not sure if this is supposed to be clean
 			if (success) {
 				helpMarked(deleteInfo);
 				return true;
