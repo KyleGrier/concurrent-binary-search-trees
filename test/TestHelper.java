@@ -29,15 +29,19 @@ class TestHelper {
    */
   Long performOperations(Tree<Integer> tree,
                          OperationType operation) {
-    if (operation.equals(OperationType.INSERT)) {
+    if (operation == null) {
+      performMixedOperations(tree);
+    } else if(operation.equals(OperationType.INSERT)) {
       return performInserts(tree);
     } else if (operation.equals(OperationType.SEARCH)) {
       return performSearches(tree);
     } else if (operation.equals(OperationType.DELETE)) {
       return performDeletes(tree);
-    } else {
-      return 3L;
     }
+
+    // Unknown operation
+    System.out.println("An error occurred.");
+    return 0L;
   }
 
   /**
@@ -178,6 +182,7 @@ class TestHelper {
         future.get();
       } catch (ExecutionException | InterruptedException e) {
         System.out.println("Thread interrupted.");
+        e.printStackTrace();
       }
     }
     long endTime = System.nanoTime();
@@ -211,6 +216,7 @@ class TestHelper {
         allInserted.addAll(values);
       } catch (ExecutionException | InterruptedException e) {
         System.out.println("Thread interrupted.");
+        e.printStackTrace();
       }
     }
 
@@ -257,13 +263,14 @@ class TestHelper {
 
       } catch (ExecutionException | InterruptedException e) {
         System.out.println("Thread interrupted.");
+        e.printStackTrace();
       }
     }
     long endTime = System.nanoTime();
 
     System.out.println("Done searching.");
 
-    // Return time taken to insert
+    // Return time taken to search
     return endTime - startTime;
   }
 
@@ -285,6 +292,7 @@ class TestHelper {
         valueLists.add(future.get());
       } catch (ExecutionException | InterruptedException e) {
         System.out.println("Thread interrupted.");
+        e.printStackTrace();
       }
     }
 
@@ -305,11 +313,41 @@ class TestHelper {
         future.get();
       } catch (ExecutionException | InterruptedException e) {
         System.out.println("Thread interrupted.");
+        e.printStackTrace();
       }
     }
     long endTime = System.nanoTime();
 
     System.out.println("Done deleting.");
+
+    // Return time taken to insert
+    return endTime - startTime;
+  }
+
+  private Long performMixedOperations(Tree<Integer> tree) {
+    System.out.println("Running mixed test...");
+
+    List<Future> futures = new ArrayList<>();
+
+    // Start threads
+    long startTime = System.nanoTime();
+    for (int i = 0; i < NUM_THREADS; i++) {
+      Future<Void> future = service.submit(new MixedThread(tree, NUM_OPERATIONS));
+      futures.add(future);
+    }
+
+    // Wait for threads to finish
+    for (Future future : futures) {
+      try {
+        future.get();
+      } catch (ExecutionException | InterruptedException e) {
+        System.out.println("Thread interrupted.");
+        e.printStackTrace();
+      }
+    }
+    long endTime = System.nanoTime();
+
+    System.out.println("Done performing mixed test.");
 
     // Return time taken to insert
     return endTime - startTime;
@@ -456,11 +494,22 @@ class TestHelper {
             break;
 
           case SEARCH:
-            tree.search(inserted.get(index));
+            if (inserted.size() == 0) continue;
+
+            int value = inserted.get(index);
+            if (!tree.search(value)) {
+              System.out.println("NOT FOUND: " + value);
+            }
+
             break;
 
           case DELETE:
-            tree.delete(inserted.get(index));
+            if (inserted.size() == 0) continue;
+
+            value = inserted.get(index);
+            if (!(tree.delete(value))) {
+              System.out.println("UNABLE TO DELETE VALUE: " + value);
+            }
 
             inserted.remove(index);
             break;
