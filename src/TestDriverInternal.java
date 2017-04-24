@@ -8,29 +8,31 @@ public class TestDriverInternal {
         int INF_R = Integer.MAX_VALUE - 2;
         final ILockFreeBST<Integer> tree = new ILockFreeBST<>(INF_R, INF_T, INF_U);
 
-        System.out.println(tree.insert(30));
+        /*System.out.println(tree.insert(30));
         System.out.println(tree.insert(20));
         System.out.println(tree.insert(40));
         System.out.println(tree.insert(50));
-        System.out.println(tree.insert(10));
+        System.out.println(tree.insert(10)); */
 
 
         try {
             Thread t1 = new Thread() {
                 public void run() {
-                    tree.insert(51);
-                    tree.insert(16);
-                    tree.insert(60);
-                    tree.insert(12);
-                    tree.delete(51);
+                    tree.insert(30);
+                    tree.insert(20);
+                    tree.insert(40);
+                    tree.insert(50);
+                    tree.insert(10);
+
                 }
             };
 
             Thread t2 = new Thread() {
                 public void run() {
-                    tree.delete(20);
-                    tree.delete(40);
-                    tree.insert(61);
+                    tree.insert(51);
+                    tree.insert(16);
+                    tree.insert(60);
+                    tree.insert(12);
                 }
             };
 
@@ -40,23 +42,76 @@ public class TestDriverInternal {
             t1.join();
             t2.join();
 
+
+            //should be false
+            System.out.println("Following should be true");
+
+            System.out.println(tree.search(20));
+            System.out.println(tree.search(40));
+            System.out.println(tree.search(51));
+            System.out.println(tree.search(60));
+
+
+            //should be true
+            //System.out.println("Following should be true");
+            System.out.println(tree.search(12));
+            System.out.println(tree.search(16));
+
+            System.out.println(tree.search(50));
+            System.out.println(tree.search(30));
+            System.out.println(tree.search(10));
+
+
+            Thread t3 = new Thread() {
+                public void run() {
+                    //System.out.println(tree.delete(30));
+                    tree.delete(30);
+                    tree.delete(20);
+                    tree.delete(40);
+                    tree.delete(50);
+                    tree.delete(10);
+
+                }
+            };
+
+            Thread t4 = new Thread() {
+                public void run() {
+                    tree.delete(51);
+                    tree.delete(16);
+                    tree.delete(60);
+                    tree.delete(12);
+                }
+            };
+
+
+            t3.start();
+            t4.start();
+
+            t3.join();
+            t4.join();
+
             System.out.println("Searching");
 
             //should be false
             System.out.println("Following should be false");
+
+
+            System.out.println(tree.search(30));
+            
+
+
             System.out.println(tree.search(20));
             System.out.println(tree.search(40));
             System.out.println(tree.search(51));
+            System.out.println(tree.search(60));
 
 
             //should be true
-            System.out.println("Following should be true");
+            //System.out.println("Following should be true");
             System.out.println(tree.search(12));
             System.out.println(tree.search(16));
-            System.out.println(tree.search(60));
-            System.out.println(tree.search(61));
+
             System.out.println(tree.search(50));
-            System.out.println(tree.search(30));
             System.out.println(tree.search(10));
 
 

@@ -90,12 +90,12 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
 
             if(anchorRecord.key.equals(anchorRecord.node.mKey.getReference())) {
                 int anchorStamp = anchorRecord.node.child[IEdge.RIGHT].getStamp();
-                if(!((anchorStamp & INode.DELETE_BIT ) == INode.DELETE_BIT) &&
-                        !((anchorStamp & INode.PROMOTE_BIT ) == INode.PROMOTE_BIT)) {
+                if((!((anchorStamp & INode.DELETE_BIT ) == INode.DELETE_BIT)) &&
+                        (!((anchorStamp & INode.PROMOTE_BIT ) == INode.PROMOTE_BIT))) {
                     return seekRecord;
 
                 }
-                if(pAnchorRecord.equals(anchorRecord) && pSeekRecord != null) {
+                if(pAnchorRecord.equals(anchorRecord)) {
                     seekRecord = pSeekRecord;
                     return seekRecord;
                 }
@@ -226,7 +226,7 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
 
     private void findAndMarkSuccesor(IStateRecord<T> state) {
        INode<T> node = state.targetEdge.child;
-       ISeekRecord<T> seekRecord = state.succesorRecord;
+       //ISeekRecord<T> seekRecord = state.succesorRecord;
 
        while(true) {
            int m = node.mKey.getStamp();
@@ -236,8 +236,8 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
                break;
            }
 
-           IEdge<T> successorEdge = seekRecord.lastEdge;
-           INode<T> left = seekRecord.injectionEdge.child;
+           IEdge<T> successorEdge = state.succesorRecord.lastEdge;
+           INode<T> left = state.succesorRecord.injectionEdge.child;
 
            m = node.mKey.getStamp();
            if (m == INode.REPLACEMENT) {
@@ -245,7 +245,7 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
            }
 
            result = successorEdge.child.child[IEdge.LEFT].compareAndSet(
-                   left, node, INode.NULL_BIT, INode.NULL_BIT & INode.PROMOTE_BIT);
+                   left, node, INode.NULL_BIT, INode.NULL_BIT | INode.PROMOTE_BIT);
 
            if(result) {
                break;
@@ -266,7 +266,8 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
         IEdge<T> succesorEdge = seekRecord.lastEdge;
         int[] stamp = new int[1];
         INode<T> address = succesorEdge.child.child[IEdge.LEFT].get(stamp);
-        if((!((stamp[0] & INode.PROMOTE_BIT ) == INode.PROMOTE_BIT)) || address != node) {
+        boolean p = (stamp[0] & INode.PROMOTE_BIT) == INode.PROMOTE_BIT;
+        if(!p || address != node) {
             node.readyToReplace = true;
             updateMode(state);
             return;
@@ -427,7 +428,9 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
             int oldStamp = stamp[0] & INode.NULL_BIT;
             int newStamp = oldStamp | flag; //??
             boolean result = node.child[which].compareAndSet(address, address, oldStamp, newStamp);
-            if(result) {
+            if(!result) {
+                continue;
+            } else {
                 break;
             }
 
@@ -441,7 +444,7 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
         INode<T> right = node.child[IEdge.RIGHT].get(temp);
         if ((temp[0] & INode.NULL_BIT) == INode.NULL_BIT) {
             return false;
-        }
+        } //their code doesn't seem to be doing this?
 
         IEdge<T> lastEdge = new IEdge(node, right, IEdge.RIGHT);
         IEdge<T> pLastEdge = new IEdge(node, right, IEdge.RIGHT);
@@ -460,10 +463,7 @@ public class ILockFreeBST<T extends Comparable> implements Tree<T>{
             lastEdge = new IEdge<>(curr, left, IEdge.LEFT);
 
         }
-
-        state.succesorRecord.lastEdge = lastEdge;
-        state.succesorRecord.pLastEdge = pLastEdge;
-        state.succesorRecord.injectionEdge = injectionEdge;
+        state.succesorRecord = new ISeekRecord<>(pLastEdge, lastEdge, injectionEdge);
         return true;
     }
 
