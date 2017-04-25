@@ -61,9 +61,6 @@ public class FineNode<T extends Comparable> {
     }
 
     public void setLock(){
-        if(lock.isLocked()){
-            System.out.println(" is blocking right now");
-        }
         lock.lock();
     }
 

@@ -197,15 +197,12 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             root.unlock();
             return true;
         }
-
-        //Decide the output based on the find
-        FineNode parentalUnit = find.getParent();
-        parentalUnit.unlock();
         if(find != null){
+            FineNode parentalUnit = find.getParent();
+            parentalUnit.unlock();
             find.unlock();
             return true;
         }else{
-            find.unlock();
             return false;
         }
     }
