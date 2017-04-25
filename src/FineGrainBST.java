@@ -172,8 +172,8 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
                 parentSuc.unlock();
             }
             parentalUnit.unlock();
+            find.unlock();
             theSuc.unlock();
-
             return true;
 
         }

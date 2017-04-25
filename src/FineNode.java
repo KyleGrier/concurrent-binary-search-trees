@@ -43,6 +43,7 @@ public class FineNode<T extends Comparable> {
     public void setParent(FineNode newMama){
         this.parent = newMama;
     }
+
     public void setValue(T value){
         this.value = value;
     }
