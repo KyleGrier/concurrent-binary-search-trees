@@ -14,8 +14,8 @@ import static org.junit.Assert.assertTrue;
 
 class TestHelper {
   private static final int NUM_THREADS = 2;
-  private static final int NUM_OPERATIONS = 100;
-  private static final int RANDOM_ADDS = 10;
+  private static final int NUM_OPERATIONS = 10;
+  private static final int RANDOM_ADDS = 5;
 
   private final ExecutorService service = Executors.newFixedThreadPool(NUM_THREADS);
 
@@ -274,17 +274,17 @@ class TestHelper {
         SearchResult<Integer> result = future.get();
 
         /* Assert that all not found were added by us */
-        System.out.println("Not found: " + result.getNotFound());
-        System.out.println("Found: " + result.getFound());
-        System.out.println("All values added as extra: " + extraNumbers);
-        if (!extraNumbers.containsAll(result.getNotFound())) {
-          System.out.println("ERROR!!!!!!!!!!");
-
-          List<Integer> diff = result.getNotFound();
-          diff.removeAll(extraNumbers);
-          System.out.println("Not Found Extra Elements: " + diff);
-        }
-        System.out.println();
+//        System.out.println("Not found: " + result.getNotFound());
+//        System.out.println("Found: " + result.getFound());
+//        System.out.println("All values added as extra: " + extraNumbers);
+//        if (!extraNumbers.containsAll(result.getNotFound())) {
+//          System.out.println("ERROR!!!!!!!!!!");
+//
+//          List<Integer> diff = result.getNotFound();
+//          diff.removeAll(extraNumbers);
+//          System.out.println("Not Found Extra Elements: " + diff);
+//        }
+//        System.out.println();
 
         /* Assert that all found were added by the thread */
 //        if (!inserted.containsAll(result.getFound())) {
@@ -349,12 +349,6 @@ class TestHelper {
     long endTime = System.nanoTime();
 
     System.out.println("Done deleting.");
-    //buildInOrderList((INode<Integer>) tree.getRoot(), new ArrayList<>());
-
-//    // Start search threads
-//    for (int i = 0; i < NUM_THREADS; i++) {
-//      Future<SearchResult<Integer>> future = service.submit(new SearchThread(tree, valueLists.get(i)));
-//    }
 
     // Return time taken to insert
     return endTime - startTime;
