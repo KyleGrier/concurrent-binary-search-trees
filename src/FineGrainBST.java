@@ -22,6 +22,7 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             Boolean answer = insertRec(node, root.getRight(), root, RIGHT);
             return answer;
         }else{ // case where the value is the same as the root
+            root.unlock();
             return false;
         }
     }
