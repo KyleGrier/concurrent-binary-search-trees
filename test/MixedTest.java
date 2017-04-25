@@ -24,7 +24,7 @@ public class MixedTest {
     System.out.println("Time taken to perform mixed operations (Java TreeSet): " + result);
   }
 
-  @Test(timeout = 10000)
+  @Test(timeout = 2000)
   public void testFineGrainedMixed() {
     Tree<Integer> tree = new FineGrainBST<>(1);
     long time = helper.performOperations(tree, null);
@@ -64,7 +64,7 @@ public class MixedTest {
   }
 
   @AfterClass
-  public static void summarizeSearches() {
+  public static void summarizeMixedOperations() {
     System.out.println("\nMixed Operation Times:\n--------------------");
     for (Map.Entry entry : times.entrySet()) {
       System.out.println(entry.getKey() + ": " + entry.getValue());

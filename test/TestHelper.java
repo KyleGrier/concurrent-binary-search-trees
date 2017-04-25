@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertTrue;
 
 class TestHelper {
-  private static final int NUM_THREADS = 8;
-  private static final int NUM_OPERATIONS = 1000;
-  private static final int RANDOM_ADDS = 100;
+  private static final int NUM_THREADS = 2;
+  private static final int NUM_OPERATIONS = 100;
+  private static final int RANDOM_ADDS = 10;
 
   private final ExecutorService service = Executors.newFixedThreadPool(NUM_THREADS);
 
@@ -40,8 +40,8 @@ class TestHelper {
     }
 
     // Unknown operation
-    System.out.println("An error occurred.");
-    return 0L;
+    System.out.println("An error occurred: Unknown Operation");
+    return null;
   }
 
   /**
@@ -66,7 +66,8 @@ class TestHelper {
       return verifyILockFreeBST(root);
     }
 
-    return true;
+    // If unknown type of tree, return false
+    return false;
   }
 
   /**
@@ -88,8 +89,8 @@ class TestHelper {
     }
 
     // Recursively check
-    return verifyFineGrainedBST(node.getLeft(), min, node.getValue() - 1)
-        && verifyFineGrainedBST(node.getRight(), node.getValue() + 1, max);
+    return verifyFineGrainedBST(node.getLeftNoLock(), min, node.getValue() - 1)
+        && verifyFineGrainedBST(node.getRightNoLock(), node.getValue() + 1, max);
   }
 
   /**
@@ -128,6 +129,12 @@ class TestHelper {
     return values.stream().sorted().collect(Collectors.toList()).equals(values);
   }
 
+  /**
+   * Builds a list of values using in-order traversal.
+   *
+   * @param node The root node to begin building at.
+   * @param values The list to insert values to.
+   */
   private static void buildInOrderList(Node<Integer> node, List<Integer> values) {
     if (node == null) {
       return;
@@ -136,6 +143,7 @@ class TestHelper {
     // If it's a leaf, we care about the value
     if (node instanceof Leaf) {
       values.add(node.getValue());
+
       //System.out.println(node.getValue() + " ");
     } else if (node instanceof InternalNode) {
       Node<Integer> left = (Node<Integer>) ((InternalNode) node).left.get();
@@ -145,10 +153,15 @@ class TestHelper {
       buildInOrderList(right, values);
     } else {
       System.out.println("Something went horribly wrong.");
-      return;
     }
   }
 
+  /**
+   * Builds a list of values using in-order traversal.
+   *
+   * @param node The root node to begin building at.
+   * @param values The list to insert values to.
+   */
   private static void buildInOrderList(INode<Integer> node, List<Integer> values) {
     if (!((node.child[0].getStamp() & INode.NULL_BIT) == INode.NULL_BIT)) {
       // Left child
@@ -156,14 +169,23 @@ class TestHelper {
     }
 
     values.add(node.mKey.getReference());
+//    System.out.println(node.mKey.getReference());
 
-    if (!((node.child[1].getStamp() & INode.NULL_BIT) == INode.NULL_BIT)) {
+    if (! ((node.child[1].getStamp() & INode.NULL_BIT) == INode.NULL_BIT) ) {
       // Right child
       buildInOrderList(node.child[1].getReference(), values);
     }
 
   }
 
+  /* ********** PERFORM OPERATION METHODS ********** */
+
+  /**
+   * Performs concurrent inserts to a tree.
+   *
+   * @param tree The tree to insert to.
+   * @return The time taken to perform the inserts in nanoseconds.
+   */
   private Long performInserts(Tree<Integer> tree) {
     System.out.println("Running insert test. Adding values...");
 
@@ -198,6 +220,7 @@ class TestHelper {
 
     List<Future<List<Integer>>> futures = new ArrayList<>();
     List<List<Integer>> valueLists = new ArrayList<>();
+    List<List<Integer>> inserted = new ArrayList<>();
     Set<Integer> allInserted = new HashSet<>();
     Set<Integer> extraNumbers = new HashSet<>();
 
@@ -212,6 +235,7 @@ class TestHelper {
       try {
         List<Integer> values = future.get();
 
+        inserted.add(values);
         valueLists.add(values);
         allInserted.addAll(values);
       } catch (ExecutionException | InterruptedException e) {
@@ -219,9 +243,6 @@ class TestHelper {
         e.printStackTrace();
       }
     }
-
-    System.out.println("Tree contains: ");
-    //buildInOrderList((Node<Integer>) tree.getRoot(), new ArrayList<>());
 
     System.out.println("Done adding to tree, adding non-existent values...");
     for (int i = 0; i < RANDOM_ADDS; i++) {
@@ -256,10 +277,19 @@ class TestHelper {
         System.out.println("Not found: " + result.getNotFound());
         System.out.println("Found: " + result.getFound());
         System.out.println("All values added as extra: " + extraNumbers);
-        assertTrue(extraNumbers.containsAll(result.getNotFound()));
+        if (!extraNumbers.containsAll(result.getNotFound())) {
+          System.out.println("ERROR!!!!!!!!!!");
+
+          List<Integer> diff = result.getNotFound();
+          diff.removeAll(extraNumbers);
+          System.out.println("Not Found Extra Elements: " + diff);
+        }
+        System.out.println();
 
         /* Assert that all found were added by the thread */
-        // TODO
+//        if (!inserted.containsAll(result.getFound())) {
+//          System.out.println("ERROR TWO!!!!!!!");
+//        }
 
       } catch (ExecutionException | InterruptedException e) {
         System.out.println("Thread interrupted.");
@@ -319,6 +349,12 @@ class TestHelper {
     long endTime = System.nanoTime();
 
     System.out.println("Done deleting.");
+    //buildInOrderList((INode<Integer>) tree.getRoot(), new ArrayList<>());
+
+//    // Start search threads
+//    for (int i = 0; i < NUM_THREADS; i++) {
+//      Future<SearchResult<Integer>> future = service.submit(new SearchThread(tree, valueLists.get(i)));
+//    }
 
     // Return time taken to insert
     return endTime - startTime;
@@ -353,6 +389,8 @@ class TestHelper {
     return endTime - startTime;
   }
 
+  /* ********** THREAD CLASSES ********** */
+
   /**
    * A Thread to perform inserts on a tree.
    */
@@ -374,38 +412,6 @@ class TestHelper {
       }
 
       return null;
-    }
-  }
-
-  /**
-   * A Thread to perform searches on a tree.
-   */
-  private class SearchThread implements Callable<SearchResult<Integer>> {
-    private final Tree<Integer> tree;
-    private final List<Integer> values;
-
-    private final List<Integer> found;
-    private final List<Integer> notFound;
-
-    SearchThread(Tree<Integer> tree, List<Integer> values) {
-      this.tree = tree;
-      this.values = values;
-
-      this.found = new ArrayList<>();
-      this.notFound = new ArrayList<>();
-    }
-
-    @Override
-    public SearchResult<Integer> call() {
-      for (Integer number : values) {
-        if (tree.search(number)) {
-          found.add(number);
-        } else {
-          notFound.add(number);
-        }
-      }
-
-      return new SearchResult<>(found, notFound);
     }
   }
 
@@ -432,11 +438,45 @@ class TestHelper {
 
         values.add(number);
         if (!tree.insert(number)) {
-          System.out.println("Failed insert");
+          System.out.println("Failed insert: " + number);
         }
       }
 
       return values;
+    }
+  }
+
+  /**
+   * A Thread to perform searches on a tree.
+   */
+  private class SearchThread implements Callable<SearchResult<Integer>> {
+    private final Tree<Integer> tree;
+    private final List<Integer> values;
+
+    private final List<Integer> found;
+    private final List<Integer> notFound;
+
+    SearchThread(Tree<Integer> tree, List<Integer> values) {
+      this.tree = tree;
+      this.values = values;
+
+      this.found = new ArrayList<>();
+      this.notFound = new ArrayList<>();
+    }
+
+    @Override
+    public SearchResult<Integer> call() {
+      for (Integer number : values) {
+        if (tree.search(number)) {
+          found.add(number);
+//          System.out.println("Found: " + number);
+        } else {
+          notFound.add(number);
+//          System.out.println("Not found: " + number);
+        }
+      }
+
+      return new SearchResult<>(found, notFound);
     }
   }
 
@@ -447,6 +487,8 @@ class TestHelper {
     private final Tree<Integer> tree;
     private final List<Integer> values;
 
+    private int failures = 0;
+
     DeleteThread(Tree<Integer> tree, List<Integer> values) {
       this.tree = tree;
       this.values = values;
@@ -455,9 +497,13 @@ class TestHelper {
     @Override
     public Void call() {
       for (Integer number : values) {
-        tree.delete(number);
+        if (!tree.delete(number)) {
+//          System.out.println("Unable to delete: " + number);
+          failures++;
+        }
       }
 
+//      System.out.println("Thread had " + failures + " failures");
       return null;
     }
   }

@@ -25,6 +25,19 @@ public class InsertTest {
   }
 
   @Test(timeout = 10000)
+  public void testSkipListInsert() {
+    // This tests the Java TreeSet implementation. No verification is done,
+    // this is simply for timing purposes.
+    Tree<Integer> tree = new JavaSkipList();
+    long time = helper.performOperations(tree, OperationType.INSERT);
+
+    String result = ((double) time / 1000000) + " ms";
+
+    times.put("Java SkipList", result);
+    System.out.println("Time taken to perform inserts (Java SkipList): " + result);
+  }
+
+  @Test(timeout = 10000)
   public void testFineGrainedInsert() {
     Tree<Integer> tree = new FineGrainBST<>(1);
     long time = helper.performOperations(tree, OperationType.INSERT);

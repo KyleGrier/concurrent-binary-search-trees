@@ -87,6 +87,15 @@ public class FineNode<T extends Comparable> {
         this.left.setLock();
         return this.left;
     }
+
+    public FineNode getRightNoLock() {
+        return this.right;
+    }
+
+    public FineNode getLeftNoLock() {
+        return this.left;
+    }
+
     public Boolean isSuccessor(){
         if(this.left == null){
             return true;

@@ -25,6 +25,19 @@ public class DeleteTest {
   }
 
   @Test(timeout = 10000)
+  public void testSkipListDelete() {
+    // This tests the Java TreeSet implementation. No verification is done,
+    // this is simply for timing purposes.
+    Tree<Integer> tree = new JavaSkipList();
+    long time = helper.performOperations(tree, OperationType.DELETE);
+
+    String result = ((double) time / 1000000) + " ms";
+
+    times.put("Java SkipList", result);
+    System.out.println("Time taken to perform deletes (Java SkipList): " + result);
+  }
+
+  @Test(timeout = 2000)
   public void testFineGrainedDelete() {
     Tree<Integer> tree = new FineGrainBST<>(1);
     long time = helper.performOperations(tree, OperationType.DELETE);
@@ -50,18 +63,18 @@ public class DeleteTest {
     System.out.println("Time taken to perform deletes (Lock Free): " + result);
   }
 
-  @Test(timeout = 10000)
-  public void testILockFreeDelete() {
-    Tree<Integer> tree = new ILockFreeBST<>(Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1, Integer.MAX_VALUE);
-    long time = helper.performOperations(tree, OperationType.DELETE);
-
-    assertTrue(TestHelper.verifyIntegerTree(tree));
-
-    String result = ((double) time / 1000000) + " ms";
-
-    times.put("Internal Lock Free", result);
-    System.out.println("Time taken to perform deletes (Internal Lock Free): " + result);
-  }
+//  @Test(timeout = 10000)
+//  public void testILockFreeDelete() {
+//    Tree<Integer> tree = new ILockFreeBST<>(Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1, Integer.MAX_VALUE);
+//    long time = helper.performOperations(tree, OperationType.DELETE);
+//
+//    assertTrue(TestHelper.verifyIntegerTree(tree));
+//
+//    String result = ((double) time / 1000000) + " ms";
+//
+//    times.put("Internal Lock Free", result);
+//    System.out.println("Time taken to perform deletes (Internal Lock Free): " + result);
+//  }
 
   @AfterClass
   public static void summarizeDeletes() {
