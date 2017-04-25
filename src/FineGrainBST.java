@@ -159,7 +159,7 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
                 if(side == LEFT){
                     parentSuc.setLeft(rightSuc);
                 }else{
-                    parentalUnit.setRight(rightSuc);
+                    parentSuc.setRight(rightSuc);
                 }
                 rightSuc.unlock();
             }else{
@@ -316,9 +316,6 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             parent.unlock();
             return searchDelete2(value, current.getRight(), current);
         }else{ // case where the value is the same as the current node
-            if(parent.isLocked()){
-                System.out.println("Is Locked");
-            }
             return current;
         }
     }
