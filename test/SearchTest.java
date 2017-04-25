@@ -13,8 +13,6 @@ public class SearchTest {
 
   @Test(timeout = 10000)
   public void testTreeSetSearch() {
-    // This tests the Java TreeSet implementation. No verification is done,
-    // this is simply for timing purposes.
     Tree<Integer> tree = new JavaTree();
     long time = helper.performOperations(tree, OperationType.SEARCH);
 
@@ -26,8 +24,6 @@ public class SearchTest {
 
   @Test(timeout = 10000)
   public void testSkipListSearch() {
-    // This tests the Java TreeSet implementation. No verification is done,
-    // this is simply for timing purposes.
     Tree<Integer> tree = new JavaSkipList();
     long time = helper.performOperations(tree, OperationType.SEARCH);
 

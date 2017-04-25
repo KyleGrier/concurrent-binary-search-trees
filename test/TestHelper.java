@@ -10,8 +10,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertTrue;
-
 class TestHelper {
   private static final int NUM_THREADS = 2;
   private static final int NUM_OPERATIONS = 10;
@@ -143,8 +141,6 @@ class TestHelper {
     // If it's a leaf, we care about the value
     if (node instanceof Leaf) {
       values.add(node.getValue());
-
-      //System.out.println(node.getValue() + " ");
     } else if (node instanceof InternalNode) {
       Node<Integer> left = (Node<Integer>) ((InternalNode) node).left.get();
       Node<Integer> right = (Node<Integer>) ((InternalNode) node).right.get();
@@ -169,7 +165,6 @@ class TestHelper {
     }
 
     values.add(node.mKey.getReference());
-//    System.out.println(node.mKey.getReference());
 
     if (! ((node.child[1].getStamp() & INode.NULL_BIT) == INode.NULL_BIT) ) {
       // Right child
@@ -215,12 +210,18 @@ class TestHelper {
     return endTime - startTime;
   }
 
+  /**
+   * Performs concurrent searches in a tree. First inserts concurrently, and then
+   * searches for all of the inserted values as well as some values that were not inserted.
+   *
+   * @param tree The tree to search.
+   * @return The time taken to perform the searches in nanoseconds.
+   */
   private Long performSearches(Tree<Integer> tree) {
     System.out.println("Running Search Test. Adding values first...");
 
     List<Future<List<Integer>>> futures = new ArrayList<>();
     List<List<Integer>> valueLists = new ArrayList<>();
-    List<List<Integer>> inserted = new ArrayList<>();
     Set<Integer> allInserted = new HashSet<>();
     Set<Integer> extraNumbers = new HashSet<>();
 
@@ -235,7 +236,6 @@ class TestHelper {
       try {
         List<Integer> values = future.get();
 
-        inserted.add(values);
         valueLists.add(values);
         allInserted.addAll(values);
       } catch (ExecutionException | InterruptedException e) {
@@ -286,11 +286,6 @@ class TestHelper {
 //        }
 //        System.out.println();
 
-        /* Assert that all found were added by the thread */
-//        if (!inserted.containsAll(result.getFound())) {
-//          System.out.println("ERROR TWO!!!!!!!");
-//        }
-
       } catch (ExecutionException | InterruptedException e) {
         System.out.println("Thread interrupted.");
         e.printStackTrace();
@@ -304,6 +299,13 @@ class TestHelper {
     return endTime - startTime;
   }
 
+  /**
+   * Performs concurrent deletes in a tree. First inserts concurrently, and then
+   * deletes all of the inserted values.
+   *
+   * @param tree The tree to delete from.
+   * @return The time taken to perform the deletes in nanoseconds.
+   */
   private Long performDeletes(Tree<Integer> tree) {
     System.out.println("Running Delete Test. Adding values first...");
 
@@ -350,10 +352,17 @@ class TestHelper {
 
     System.out.println("Done deleting.");
 
-    // Return time taken to insert
+    // Return time taken to delete
     return endTime - startTime;
   }
 
+  /**
+   * Performs concurrent operations in a tree. The operations are a mix of
+   * insert, search, and delete.
+   *
+   * @param tree The tree to modify.
+   * @return The time taken to perform the operations in nanoseconds.
+   */
   private Long performMixedOperations(Tree<Integer> tree) {
     System.out.println("Running mixed test...");
 
@@ -463,10 +472,8 @@ class TestHelper {
       for (Integer number : values) {
         if (tree.search(number)) {
           found.add(number);
-//          System.out.println("Found: " + number);
         } else {
           notFound.add(number);
-//          System.out.println("Not found: " + number);
         }
       }
 
@@ -481,8 +488,6 @@ class TestHelper {
     private final Tree<Integer> tree;
     private final List<Integer> values;
 
-    private int failures = 0;
-
     DeleteThread(Tree<Integer> tree, List<Integer> values) {
       this.tree = tree;
       this.values = values;
@@ -492,12 +497,10 @@ class TestHelper {
     public Void call() {
       for (Integer number : values) {
         if (!tree.delete(number)) {
-//          System.out.println("Unable to delete: " + number);
-          failures++;
+          System.out.println("Unable to delete: " + number);
         }
       }
 
-//      System.out.println("Thread had " + failures + " failures");
       return null;
     }
   }
@@ -522,7 +525,6 @@ class TestHelper {
     public Void call() {
       for (int i = 0; i < operations; i++) {
         OperationType type = OperationType.randomType();
-        //System.out.println("Performing " + type);
 
         int number = ThreadLocalRandom.current().nextInt();
 

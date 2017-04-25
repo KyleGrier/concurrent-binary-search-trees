@@ -13,8 +13,6 @@ public class DeleteTest {
 
   @Test(timeout = 10000)
   public void testTreeSetDelete() {
-    // This tests the Java TreeSet implementation. No verification is done,
-    // this is simply for timing purposes.
     Tree<Integer> tree = new JavaTree();
     long time = helper.performOperations(tree, OperationType.DELETE);
 
@@ -26,8 +24,6 @@ public class DeleteTest {
 
   @Test(timeout = 10000)
   public void testSkipListDelete() {
-    // This tests the Java TreeSet implementation. No verification is done,
-    // this is simply for timing purposes.
     Tree<Integer> tree = new JavaSkipList();
     long time = helper.performOperations(tree, OperationType.DELETE);
 

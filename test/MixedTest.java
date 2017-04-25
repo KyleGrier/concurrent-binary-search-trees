@@ -13,8 +13,6 @@ public class MixedTest {
 
   @Test(timeout = 10000)
   public void testTreeSetMixed() {
-    // This tests the Java TreeSet implementation. No verification is done,
-    // this is simply for timing purposes.
     Tree<Integer> tree = new JavaTree();
     long time = helper.performOperations(tree, null);
 
@@ -22,6 +20,17 @@ public class MixedTest {
 
     times.put("Java TreeSet", result);
     System.out.println("Time taken to perform mixed operations (Java TreeSet): " + result);
+  }
+
+  @Test(timeout = 10000)
+  public void testSkipListMixed() {
+    Tree<Integer> tree = new JavaSkipList();
+    long time = helper.performOperations(tree, null);
+
+    String result = ((double) time / 1000000) + " ms";
+
+    times.put("Java SkipList", result);
+    System.out.println("Time taken to perform mixed operations (Java SkipList): " + result);
   }
 
   @Test(timeout = 2000)
