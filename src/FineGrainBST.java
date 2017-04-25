@@ -22,6 +22,7 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             Boolean answer = insertRec(node, root.getRight(), root, RIGHT);
             return answer;
         }else{ // case where the value is the same as the root
+            root.unlock();
             return false;
         }
     }
@@ -158,7 +159,7 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
                 if(side == LEFT){
                     parentSuc.setLeft(rightSuc);
                 }else{
-                    parentalUnit.setRight(rightSuc);
+                    parentSuc.setRight(rightSuc);
                 }
                 rightSuc.unlock();
             }else{
@@ -196,15 +197,12 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             root.unlock();
             return true;
         }
-
-        //Decide the output based on the find
-        FineNode parentalUnit = find.getParent();
-        parentalUnit.unlock();
         if(find != null){
+            FineNode parentalUnit = find.getParent();
+            parentalUnit.unlock();
             find.unlock();
             return true;
         }else{
-            find.unlock();
             return false;
         }
     }
@@ -315,9 +313,6 @@ public class FineGrainBST<T extends Comparable> implements Tree<T> {
             parent.unlock();
             return searchDelete2(value, current.getRight(), current);
         }else{ // case where the value is the same as the current node
-            if(parent.isLocked()){
-                System.out.println("Is Locked");
-            }
             return current;
         }
     }
